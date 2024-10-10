@@ -13,14 +13,29 @@ if (comp && comp instanceof CompItem) {
 
   // Ensure a layer is selected
   if (layer) {
-    var totalFrames = Math.ceil(layer.outPoint / frameDuration);
-    for (var i = 0; i < totalFrames; i++) {
-      // Move the playhead to the frame duration
-      layer.startTime = i * frameDuration;
-      layer.outPoint = (i + 1) * frameDuration;
+    // Get the duration of the composition
+    var compDuration = comp.duration;
+    var totalFrames = Math.ceil(compDuration / frameDuration);
 
-      // Split the layer
-      layer.splitLayer();
+    for (var i = 1; i < totalFrames; i++) {
+      // Calculate the time at which to split the layer
+      var splitTime = i * frameDuration;
+
+      // Move the playhead to the split time
+      app.project.activeItem.time = splitTime;
+
+      // Check if the layer is still active and within the split time
+      if (layer.inPoint < splitTime && splitTime < layer.outPoint) {
+        // Split the layer at the specified time
+        layer.splitLayer(splitTime);
+
+        // Re-fetch the layer to ensure we're working with the latest version
+        layer = comp.selectedLayers[0]; // Get the current selected layer again
+      } else {
+        alert(
+          "Skipping split at: " + splitTime + " (not active or out of range)"
+        );
+      }
     }
   } else {
     alert("Please select a layer to split.");
